@@ -1,0 +1,1147 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龙氏秋招简历编写布局工具</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "SimSun", sans-serif;
+    background: #525659; color: #2b2f36;
+    padding: 64px 12px 60px;
+  }
+  /* ============ 工具栏 ============ */
+  #toolbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1f2937; color: #fff;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 8px 14px; box-shadow: 0 2px 8px rgba(0,0,0,.35);
+  }
+  #toolbar .brand { font-weight: bold; font-size: 14px; margin-right: 6px; }
+  #toolbar button {
+    background: #374151; color: #fff; border: 1px solid #4b5563;
+    border-radius: 6px; padding: 6px 14px; font-size: 13px; cursor: pointer;
+  }
+  #toolbar button:hover { background: #4b5563; }
+  #toolbar button.primary { background: #2563eb; border-color: #2563eb; }
+  #toolbar button.primary:hover { background: #1d4ed8; }
+  #toolbar button.on { background: #16a34a; border-color: #16a34a; }
+  #tabs { display: flex; gap: 4px; margin-left: 10px; }
+  #tabs button { border-radius: 6px 6px 0 0; }
+  #tabs button.on { background: #f9fafb; color: #1f2937; font-weight: bold; }
+  #saveState { font-size: 12px; opacity: .75; margin-left: auto; }
+
+  /* ============ 格式工具栏（WPS 风格） ============ */
+  #fmtbar {
+    position: fixed; top: 45px; left: 0; right: 0; z-index: 99;
+    display: none; align-items: center; gap: 3px; flex-wrap: wrap;
+    background: #f9fafb; border-bottom: 1px solid #d1d5db;
+    padding: 5px 12px; box-shadow: 0 2px 6px rgba(0,0,0,.12);
+  }
+  body.editing #fmtbar { display: flex; }
+  body.editing { padding-top: 108px; }
+  #fmtbar .fb {
+    min-width: 28px; height: 28px; border: 1px solid transparent; background: none;
+    border-radius: 5px; cursor: pointer; font-size: 14px; color: #374151;
+    display: inline-flex; align-items: center; justify-content: center; padding: 0 5px;
+  }
+  #fmtbar .fb:hover { background: #e5e7eb; border-color: #c4c9d0; }
+  #fmtbar .fb:active { background: #d1d5db; }
+  #fmtbar .fb.b { font-weight: 800; }
+  #fmtbar .fb.i { font-style: italic; }
+  #fmtbar .fb.u { text-decoration: underline; }
+  #fmtbar .fb.s { text-decoration: line-through; }
+  #fmtbar .fb.sup2 { font-size: 11px; }
+  #fmtbar select {
+    height: 28px; border: 1px solid #c4c9d0; border-radius: 5px;
+    background: #fff; font-size: 12.5px; padding: 0 4px; cursor: pointer; color: #374151;
+  }
+  #fmtbar .sep { width: 1px; height: 20px; background: #d1d5db; margin: 0 5px; }
+  #fmtbar .fgrp { display: inline-flex; align-items: center; gap: 2px; }
+  #fmtbar .colorwrap { position: relative; display: inline-flex; align-items: center; gap: 3px; }
+  #fmtbar input[type="color"] {
+    width: 28px; height: 28px; border: 1px solid #c4c9d0; border-radius: 5px;
+    padding: 1px; cursor: pointer; background: #fff;
+  }
+  #fmtbar .fchk { font-size: 11px; padding: 0 4px; }
+  #fmtbar .lab { font-size: 11.5px; color: #6b7280; margin: 0 2px 0 6px; }
+  #fmtbar .swatch {
+    width: 26px; height: 15px; border-radius: 3px; cursor: pointer; border: 1px solid #c4c9d0;
+  }
+
+  /* ============ A4 页面 ============ */
+  .wrap { max-width: 820px; margin: 0 auto; }
+  .page {
+    width: 210mm; min-height: 296mm; margin: 0 auto 26px;
+    background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,.4);
+    padding: 11mm 13mm 12mm;
+    display: none;
+  }
+  body.show-r1 #page1 { display: block; }
+  body.show-r2 #page2 { display: block; }
+  body.show-r3 #page3 { display: block; }
+  body.show-r4 #page4 { display: block; }
+
+  /* ============ 简历通用排版（还原原版） ============ */
+  .resume { font-size: 13.2px; line-height: 1.62; color: #222; }
+  .resume p { margin: 0; }
+
+  /* 头部 */
+  .head { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+  .head .who { flex: 1; }
+  .head .name { font-size: 26px; font-weight: 800; letter-spacing: 2px; }
+  .head .contact { font-size: 12.5px; color: #444; margin-top: 3px; }
+  .badge {
+    width: 64px; height: 64px; border-radius: 50%; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 15px; text-align: center; line-height: 1.2;
+  }
+  .photo {
+    width: 78px; height: 104px; flex: none; border: 1px solid #ccc;
+    display: flex; align-items: center; justify-content: center;
+    color: #999; font-size: 12px; background: #f7f7f7;
+  }
+
+  /* 区块标题：原版是黑色粗体 + 通栏下划线 */
+  .sec {
+    font-size: 15.5px; font-weight: 800; margin: 12px 0 6px;
+    padding-bottom: 3px; border-bottom: 2px solid currentColor;
+  }
+  .r1 .sec { color: #b3541e; border-color: #b3541e; }
+  .r2 .sec { color: #1a1a1a; border-color: #1a1a1a; }
+  .r3 .sec { color: #1a4f9c; border-color: #1a4f9c; }
+  .r3 .sk .lab { color: #1a4f9c; }
+  .r3 ul.ls li::before { color: #555; }
+
+  /* —— r3 / r4 原版复刻版式（按图排）—— */
+  .r3 .ag, .r4 .ag { font-size: 8.2pt; line-height: 1.5; color: #111; padding: 10pt 12pt; }
+  .r3 .ag-top .ln, .r4 .ag-top .ln { margin: 0 0 1.5pt; font-weight: 600; }
+  .r3 .ag-h2, .r4 .ag-h2 { color: #1155cc; font-weight: 700; font-size: 10.5pt; margin: 7pt 0 3pt; }
+  .r3 .ag-p, .r4 .ag-p { margin: 2pt 0; text-align: justify; }
+  .r3 .ag-ls, .r4 .ag-ls { margin: 1pt 0 3pt; padding-left: 13pt; }
+  .r3 .ag-ls li, .r4 .ag-ls li { margin: 0 0 2pt; text-align: justify; }
+  .r3 .ag-ls ul, .r4 .ag-ls ul { margin: 1pt 0 2pt; padding-left: 12pt; list-style: circle; }
+  .r3 .ag-t, .r4 .ag-t { font-weight: 700; margin: 5pt 0 2pt; }
+  .r3 .ag b, .r4 .ag b { font-weight: 700; }
+  .r3 .ag-right, .r4 .ag-right { float: right; font-weight: 400; }
+  /* r4 专属：红色标题横幅 */
+  .r4 .ag-banner { background: #c62828; color: #fff; font-weight: 700; font-size: 12pt; padding: 3pt 10pt; margin: 0 0 6pt; display: inline-block; }
+  .r4 .ag-link { color: #1155cc; }
+
+  /* 教育经历条目 */
+  .edu { margin: 4px 0 2px; }
+  .edu .en { font-weight: 700; font-size: 13.5px; }
+  .edu .cn { font-weight: 700; font-size: 13.5px; }
+  .edu .major-en { font-size: 12.8px; }
+  .edu .major-cn { font-size: 12.8px; }
+  .edu .right {
+    float: right; font-size: 12px; color: #333; font-weight: 400; padding-top: 2px;
+  }
+  .clearfix::after { content: ""; display: block; clear: both; }
+
+  /* 技能标签行：原版是「标签：内容」蓝/棕粗体 */
+  .sk { margin: 2.5px 0; }
+  .sk .lab { font-weight: 800; }
+  .r1 .sk .lab { color: #b3541e; }
+  .r2 .sk .lab { color: #1a4f9c; }
+
+  /* 项目 / 软著（红/蓝强调行） */
+  .proj-title { color: #c0392b; font-weight: 800; margin: 4px 0 2px; }
+  .copy-right { color: #1a4f9c; font-weight: 800; margin: 4px 0 2px; }
+
+  /* 列表 */
+  ul.ls { list-style: none; margin: 1px 0 3px; }
+  ul.ls li { position: relative; padding-left: 15px; margin: 1.5px 0; }
+  ul.ls li::before { content: "•"; position: absolute; left: 4px; color: #c0392b; }
+  .r2 ul.ls li::before { color: #555; }
+
+  /* 实习经历条目 */
+  .job-head { margin: 3px 0 1px; }
+  .job-head .co-en { font-weight: 700; }
+  .job-head .co-cn { font-weight: 700; }
+  .job-head .role { font-size: 12.8px; }
+  .job-head .right { float: right; font-size: 12px; font-weight: 400; color: #333; padding-top: 2px; }
+  .sub { font-weight: 800; color: #1a4f9c; margin: 4px 0 1px; }
+  .r1 .sub.warm { color: #1a4f9c; }
+  .sub-inline { font-weight: 800; color: #1a4f9c; }
+
+  /* 荣誉奖项行：右侧等级标签 */
+  .aw { margin: 2px 0; }
+  .aw .lv { float: right; font-weight: 700; }
+  .aw .lv b { color: #c0392b; }
+
+  /* 课程 */
+  .course { margin: 2.5px 0; padding-left: 18px; }
+  .course .lab { font-weight: 800; color: #1a4f9c; }
+
+  /* ============ 编辑态 ============ */
+  body.editing .page { outline: 3px dashed #2563eb; outline-offset: 4px; }
+  #hoverBar {
+    position: absolute; z-index: 90; display: none; gap: 2px;
+    background: #1f2937; border-radius: 5px; padding: 2px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  }
+  #hoverBar button {
+    background: none; border: none; color: #fff; cursor: pointer;
+    font-size: 12px; padding: 3px 7px; border-radius: 4px;
+  }
+  #hoverBar button:hover { background: #4b5563; }
+
+  /* 选中板块的批量操作条（复制 / 删除） */
+  #selbar {
+    position: fixed; bottom: 74px; left: 50%; transform: translateX(-50%);
+    display: none; align-items: center; gap: 4px; z-index: 150;
+    background: #1f2937; border-radius: 6px; padding: 4px 6px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.45);
+  }
+  #selbar span { color: #cbd5e1; font-size: 12px; padding: 0 6px; white-space: nowrap; }
+  #selbar button {
+    background: none; border: none; color: #fff; cursor: pointer;
+    font-size: 12px; padding: 4px 8px; border-radius: 4px; white-space: nowrap;
+  }
+  #selbar button:hover { background: #4b5563; }
+
+  /* 框选矩形 */
+  #marquee {
+    position: absolute; z-index: 35; pointer-events: none;
+    border: 1px dashed #2563eb; background: rgba(37, 99, 235, .12);
+  }
+  body.marqueeing, body.marqueeing * { cursor: crosshair !important; user-select: none !important; }
+
+  #toast {
+    position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%);
+    background: #16a34a; color: #fff; padding: 9px 22px; border-radius: 8px;
+    font-size: 14px; display: none; z-index: 200; box-shadow: 0 4px 14px rgba(0,0,0,.3);
+  }
+
+  /* ============ 自由排版（已并入编辑模式） ============ */
+  .page.canvas { position: relative; }
+  body.editing .page.canvas {
+    background-image:
+      linear-gradient(rgba(37, 99, 235, .07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(37, 99, 235, .07) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  body.editing .unit { outline: 1px dashed transparent; outline-offset: 2px; }
+  body.editing .unit:hover { outline: 1px dashed #2563eb; }
+  .unit.sel { outline: 2px solid #16a34a !important; outline-offset: 2px; cursor: move; }
+  .unit.dragging-el {
+    opacity: .8; outline: 2px solid #16a34a !important;
+    z-index: 30; border-radius: 3px; cursor: move;
+  }
+  .hline { border-radius: 1px; }
+  body.brushing, body.brushing * { cursor: crosshair !important; }
+  #fmtbar .fb.on { background: #16a34a; border-color: #16a34a; color: #fff; }
+
+  /* ============ 打印 ============ */
+  @page { size: A4; margin: 0; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    #toolbar, #hoverBar, #toast, #selbar, #marquee { display: none !important; }
+    .page {
+      display: block !important; box-shadow: none; margin: 0;
+      width: 210mm; min-height: 296mm; page-break-after: always;
+      outline: none !important;
+    }
+    .page::before { display: none !important; }
+    body.editing .page.canvas { background-image: none !important; }
+    .unit, .unit.sel { outline: none !important; }
+  }
+</style>
+</head>
+<body class="show-r1">
+
+<div id="toolbar">
+  <span class="brand">📄 简历编辑器</span>
+  <button id="btnEdit" class="primary">✏️ 进入编辑</button>
+  <button id="btnSave">💾 保存</button>
+  <button id="btnReset">↺ 恢复原版</button>
+  <button id="btnPrint">🖨️ 打印 / 导出PDF</button>
+  <button id="btnDownload">⬇️ 下载HTML</button>
+  <div id="tabs">
+    <button data-tab="r1" class="on">简历一</button>
+    <button data-tab="r2">简历二</button>
+    <button data-tab="r3">简历三</button>
+    <button data-tab="r4">简历四</button>
+  </div>
+  <span id="saveState"></span>
+</div>
+
+<div id="fmtbar">
+  <button class="fb" data-cmd="undo" title="撤销 (Ctrl+Z)">↩</button>
+  <button class="fb" data-cmd="redo" title="重做 (Ctrl+Y)">↪</button>
+  <span class="sep"></span>
+
+  <span class="fgrp">
+    <span class="lab">字体</span>
+    <select id="fontSel" title="字体">
+      <option value="">默认</option>
+      <option value="Microsoft YaHei">微软雅黑</option>
+      <option value="SimSun">宋体</option>
+      <option value="SimHei">黑体</option>
+      <option value="KaiTi">楷体</option>
+      <option value="FangSong">仿宋</option>
+      <option value="Segoe UI, Arial">西文 Arial</option>
+      <option value="Georgia, serif">Georgia</option>
+      <option value="Courier New, monospace">等宽</option>
+    </select>
+    <span class="lab">字号</span>
+    <select id="sizeSel" title="字号">
+      <option value="">默认</option>
+      <option value="10">10px</option>
+      <option value="11">11px</option>
+      <option value="12">12px</option>
+      <option value="12.8">13px</option>
+      <option value="14">14px</option>
+      <option value="15">15px</option>
+      <option value="16">16px</option>
+      <option value="18">18px</option>
+      <option value="20">20px</option>
+      <option value="24">24px</option>
+      <option value="28">28px</option>
+      <option value="36">36px</option>
+    </select>
+    <button class="fb" data-act="sizeDown" title="减小字号">A⁻</button>
+    <button class="fb" data-act="sizeUp" title="增大字号">A⁺</button>
+  </span>
+  <span class="sep"></span>
+
+  <span class="fgrp">
+    <button class="fb b" data-cmd="bold" title="加粗 (Ctrl+B)">B</button>
+    <button class="fb i" data-cmd="italic" title="斜体 (Ctrl+I)">I</button>
+    <button class="fb u" data-cmd="underline" title="下划线 (Ctrl+U)">U</button>
+    <button class="fb s" data-cmd="strikeThrough" title="删除线">S</button>
+    <button class="fb sup2" data-cmd="superscript" title="上标">X²</button>
+    <button class="fb sup2" data-cmd="subscript" title="下标">X₂</button>
+  </span>
+  <span class="sep"></span>
+
+  <span class="colorwrap">
+    <span class="lab">文字</span>
+    <input type="color" id="foreColor" value="#c0392b" title="字迹颜色">
+    <span class="fchk" id="foreCur">红</span>
+    <span class="swatch" style="background:#c0392b" data-fore="#c0392b"></span>
+    <span class="swatch" style="background:#1a4f9c" data-fore="#1a4f9c"></span>
+    <span class="swatch" style="background:#000000" data-fore="#000000"></span>
+    <span class="swatch" style="background:#6b7280" data-fore="#6b7280"></span>
+    <span class="swatch" style="background:#b3541e" data-fore="#b3541e"></span>
+    <span class="swatch" style="background:#16a34a" data-fore="#16a34a"></span>
+  </span>
+  <span class="sep"></span>
+
+  <span class="colorwrap">
+    <span class="lab">底纹</span>
+    <input type="color" id="hiliteColor" value="#fff3c4" title="背景高亮">
+    <span class="swatch" style="background:#fff3c4" data-hilite="#fff3c4"></span>
+    <span class="swatch" style="background:#ffe0e0" data-hilite="#ffe0e0"></span>
+    <span class="swatch" style="background:#e0f0ff" data-hilite="#e0f0ff"></span>
+    <span class="swatch" style="background:#e2f6e2" data-hilite="#e2f6e2"></span>
+    <span class="swatch" style="background:#ffffff" data-hilite="#ffffff" title="取消底纹"></span>
+  </span>
+  <span class="sep"></span>
+
+  <span class="fgrp">
+    <button class="fb" data-cmd="justifyLeft" title="左对齐">⯇</button>
+    <button class="fb" data-cmd="justifyCenter" title="居中">≡</button>
+    <button class="fb" data-cmd="justifyRight" title="右对齐">⯈</button>
+    <button class="fb" data-act="lhUp" title="增大行距">↕⁺</button>
+    <button class="fb" data-act="lhDown" title="减小行距">↕⁻</button>
+  </span>
+  <span class="sep"></span>
+
+  <button class="fb" data-cmd="removeFormat" title="清除所选文字的格式">🧹 清除格式</button>
+  <span class="sep"></span>
+  <button class="fb" data-act="brush" title="格式刷：先把光标点在已有所需格式的文字上 → 点格式刷 → 选中要应用的目标文字">🖌️ 格式刷</button>
+</div>
+
+<div id="hoverBar">
+  <button data-act="add">＋ 克隆</button>
+  <button data-act="del">✕ 删除</button>
+</div>
+
+<div id="selbar">
+  <span id="selcount">已选 0 个板块</span>
+  <button data-act="dup" title="复制选中的板块（Ctrl+D）">⧉ 复制</button>
+  <button data-act="del" title="删除选中的板块（Delete 键）">✕ 删除</button>
+</div>
+
+<div class="wrap">
+
+<!-- ==================== 简历一 · 橙色模板 ==================== -->
+<div class="page r1" id="page1">
+<div class="resume" data-key="r1">
+
+  <div class="head">    <div class="who">      <div class="name" data-rpt="">王小明</div><div class="contact" data-rpt="">电话：138-0000-0000 ｜ 邮箱：wangxiaoming@email.com ｜ 现居：武汉市</div>    </div><div class="photo" data-rpt="">证件照<br>（可替换）</div>  </div>   <div class="sec" data-rpt="">教育经历</div>  <div class="edu clearfix" data-rpt="">    <span class="right">2024.09 – 2027.06 ｜ 硕士</span>    <div class="en">Example University</div>    <div class="cn">示例大学</div>    <div class="major-en">Computer Science and Technology</div>    <div class="major-cn">计算机技术【软件工程方向】</div>  </div>  <div class="edu clearfix" data-rpt="">    <span class="right">2020.09 – 2024.06 ｜ 本科</span>    <div class="en">Example University of Technology</div>    <div class="cn">示例理工大学</div>    <div class="major-en">Software Engineering</div>    <div class="major-cn">软件工程专业</div>  </div>   <div class="sk" data-rpt=""><span class="lab">专业技能：</span>Java / Spring Boot / MySQL / Redis / Vue3，熟悉前后端分离开发与 RESTful 接口设计</div>  <div class="sk" data-rpt=""><span class="lab">语言能力：</span>英语 CET-6（580），可流畅阅读英文技术文档</div>  <div class="sk" data-rpt=""><span class="lab">职业技能：</span>Git 协作、Linux 基本运维、Docker 容器化部署</div>   <div class="sec" data-rpt="">项目经历</div>  <div class="proj-title" data-rpt="">网盘管理系统【Spring Boot + Vue3 + MySQL 前后端分离】</div>  <ul class="ls">    <li data-rpt="">实现注册登录、文件上传下载、模糊检索、分类管理等 8 大核心模块</li>    <li data-rpt="">设计管理员 / 普通用户双角色权限体系，完成分页与批量操作优化</li>    <li data-rpt="">使用 Redis 缓存热点数据，列表页响应时间从 800ms 降至 120ms</li>  </ul>   <div class="sec" data-rpt="">实习经历</div>  <div class="job-head clearfix" data-rpt="">    <span class="right">2025.03 – 2025.09</span>    <div class="co-en">Example Internet Technology Co., Ltd.</div>    <div class="co-cn">某某网络科技有限公司</div>    <div class="role">Backend Development Intern · 后端开发实习生</div>  </div>   <div class="sub" data-rpt="">主要工作内容：</div>  <ul class="ls">    <li data-rpt="">参与订单中台微服务开发，负责对账模块的接口设计与实现（Java / Spring Cloud）</li>    <li data-rpt="">编写单元测试并接入 CI，模块测试覆盖率从 40% 提升至 85%</li>  </ul>   <div class="sec" data-rpt="">荣誉奖项</div>  <div class="aw clearfix" data-rpt=""><span class="lv">【省级】一等奖</span>2025 年"蓝桥杯"软件设计大赛</div>  <div class="aw clearfix" data-rpt=""><span class="lv">【校级】奖学金</span>2024 年校一等奖学金</div>
+</div><!-- /resume r1 -->
+</div><!-- /page r1 -->
+
+<!-- ==================== 简历二 · 白色学术模板 ==================== -->
+<div class="page r2" id="page2">
+<div class="resume" data-key="r2">
+
+  <div class="head">    <div class="badge" style="background:#b02a30" data-rpt="">示例<br>计科</div>    <div class="who">      <div class="name" data-rpt="">王小明</div>      <div class="contact" data-rpt="">电话：138-0000-0000 ｜ 邮箱：wangxiaoming@email.com</div>    </div>    <div class="photo" data-rpt="">证件照<br>（可替换）</div>  </div>   <div class="sec" data-rpt="">教育经历</div>  <div class="edu clearfix" data-rpt="">    <span class="right">学业时间：2020.09 – 2024.06</span>    <div class="en">Example University of Technology</div>    <div class="cn">示例理工大学</div>    <div class="major-en">Software Engineering</div>    <div class="major-cn">软件工程（本科）</div>  </div>  <div class="edu clearfix" data-rpt="">    <span class="right">毕业时间：2024.09 – 2027.06</span>    <div class="en">Example University</div>    <div class="cn">示例大学</div>    <div class="major-en">Computer Science and Technology</div>    <div class="major-cn">计算机技术【软件工程方向】（研究生）</div>  </div>   <div class="sk" data-rpt=""><span class="lab">工作技能：</span>Java / Python 双语言开发，熟悉 MySQL 调优与 Redis 缓存设计</div>  <div class="sk" data-rpt=""><span class="lab">产品设计类：</span>Axure 原型 / ProcessOn 流程图，可独立输出需求文档</div>  <div class="sk" data-rpt=""><span class="lab">工程实践类：</span>Git Flow 协作、Docker、Nginx、Linux 服务器运维</div>   <div class="copy-right" data-rpt="">【网盘管理系统 v2.0】（前后端分离云存储应用）获批软件著作权</div>   <div class="sk" data-rpt=""><span class="lab">所获荣誉：</span>研究生学业奖学金、校三好学生</div>  <div class="aw clearfix" data-rpt=""><span class="lv">【省级】一等奖</span>2025 年"蓝桥杯"软件设计大赛</div>  <div class="aw clearfix" data-rpt=""><span class="lv">【省级】二等奖</span>2025 年中国大学生计算机设计大赛</div>   <div class="course" data-rpt=""><span class="lab">主修课程：</span>数据结构与算法、操作系统、计算机网络、数据库原理、软件工程、机器学习</div>  <div class="course" data-rpt=""><span class="lab">辅修课程：</span>产品经理实战、云计算与分布式系统</div>   <div class="sec" data-rpt="">实习经历</div>  <div class="job-head clearfix" data-rpt="">    <span class="right">2025.03 – 2025.09 ｜ 武汉 · 中国</span>    <div class="co-en">Example Internet Technology Co., Ltd.</div>    <div class="co-cn">某某网络科技有限公司</div>    <div class="role">Backend Development Intern · 后端开发实习生</div>  </div>   <div class="sub" data-rpt="">【订单中台开发】</div>  <ul class="ls">    <li data-rpt="">负责对账模块接口设计与实现，日均处理订单数据 50 万条</li>  </ul>  <div class="sub" data-rpt="">【质量保障】</div>  <ul class="ls">    <li data-rpt="">编写单元测试并接入 CI 流水线，模块测试覆盖率 40% → 85%</li>  </ul>
+</div><!-- /resume r2 -->
+</div><!-- /page r2 -->
+
+<!-- ==================== 简历三 · 原版版式复刻（示例） ==================== -->
+<div class="page r3" id="page3">
+<div class="resume ag" data-key="r3">
+
+  <div class="ag-top">
+    <p class="ln" data-rpt="">🧑 25 years old, AI Agent Developer. Open to opportunities.</p>
+    <p class="ln" data-rpt="">🌐 github.com/example-agent（Example Org Contributor | Maintainer of FlowKit / LiteFlow）</p>
+    <p class="ln" data-rpt="">🎓 示例大学（人工智能与计算法学方向 硕士在读）（2025.09 – 2026.06）</p>
+  </div>
+
+  <div class="ag-h2" data-rpt="">实习经历</div>
+
+  <p class="ag-p" data-rpt=""><b>项目概述：</b>负责多模态英文翻译及技术文档方向的内容生产与语料评审，围绕 LLM 相关技术栈输出评测与训练数据，引导团队完成技术选型与流程规范，搭建语料回流管线。</p>
+
+  <ul class="ag-ls">
+    <li data-rpt=""><b>项目理念：</b>一条主线的 Long-Horizon Agent 编排（结构化规划、委托式执行、长程任务编排），面向多模态工作流，对齐 Content Engineering，支持多模型混合调度与 benchmark 长程评测</li>
+    <li data-rpt=""><b>项目执行：</b>从零到 MVP 迭代 40+ 版本，全链路 Token 成本统计与 Benchmark 自动化，模拟真实工具调用的一站式 Agent 流水线</li>
+    <li data-rpt=""><b>Agent Teams：</b>1 个上下文仓库整合开发者文档与三方文档，多个 Lead Agent 协同执行，system prompt 统一约定与成本控制（百万 token 级 / 单次任务）</li>
+    <li data-rpt=""><b>Multimodal Chain：</b>首帧秒级响应，Map-reduce 解决长文档检索，多任务下的全逻辑框架与成本效率优化</li>
+    <li data-rpt=""><b>Agent Session：</b>Token + Git + System 联动，multi-turn / 模块化 voice agent pipeline 搭建</li>
+    <li data-rpt=""><b>Content Engineering：</b>撰写知识文本并接入工具、检索与 system prompt 复盘纠错链路</li>
+  </ul>
+
+  <p class="ag-p" data-rpt=""><b>LLM 数据与训练方向实习生</b><span class="ag-right">2025.11 – 2026.04</span></p>
+
+  <div class="ag-h2" data-rpt="">项目经历</div>
+
+  <p class="ag-t" data-rpt="">Agent-Selling LLM SFT &amp; RL：Multi-Turn Trajectory Dynamics for Rubric-Eval Pipeline</p>
+  <ul class="ag-ls">
+    <li data-rpt=""><b>目标：</b>降低模型在 multi-turn 真实对话场景中的失效率，基于 rubric 评测体系迭代 SFT / RL 训练方案</li>
+    <li data-rpt="">构建 SFT 数据集（drift-sft、RL 后端 bootstrap），将内容数据 pipeline 对齐到 single-pass 复杂推理，混合 SFT / CoT 数据格式</li>
+    <li data-rpt=""><b>成果：</b>turn 设计统一生成、自动化质检，累计交付 40+ 综合数据包；LLM as Judge 与人工标注一致性 90%+</li>
+    <li data-rpt=""><b>格式化 verifier 框架：</b>verified CoT trajectory、JSON schema 校验、抽样复检</li>
+  </ul>
+
+  <p class="ag-t" data-rpt="">SWE-Bench-like Benchmark 评测链路搭建 | 示例校园平台</p>
+  <ul class="ag-ls">
+    <li data-rpt="">微调 SWE-agent 分阶段调优，会员微调模块（状态与监控对齐），48h 内交付</li>
+    <li data-rpt="">诊断消息网关推荐失败问题，定位 consumer 边界错位，修复后恢复 GPU 任务流队列调度</li>
+  </ul>
+</div><!-- /resume r3 -->
+</div><!-- /page r3 -->
+
+<!-- ==================== 简历四 · 原版版式复刻（示例） ==================== -->
+<div class="page r4" id="page4">
+<div class="resume ag" data-key="r4">
+
+  <div class="ag-banner" data-rpt="">示例简历 · 原版版式</div>   <div class="ag-top">    <p class="ln" data-rpt="">🌐 github.com/example-dev（Apache Example Committer | Maintainer of example/DeepFlow）</p>    <p class="ln" data-rpt="">🎓 示例大学（人工智能方向 硕士在读）（2025.09 – 2026）</p>  </div>   <div class="ag-h2" data-rpt="">实习经历</div>   <p class="ag-p" data-rpt="">实习期间多轮文档交互与技术文档产出，多次上线公司技术周刊与部门优秀征文。<span class="ag-link">github.com/example/deep-flow</span></p>   <ul class="ag-ls">    <li data-rpt=""><b>项目背景：</b>自研 Long-Horizon Agent Harness 后端，Skill 库建设与评测指标沉淀，多智能体多级层方案</li>    <li data-rpt=""><b>核心职责与方案：</b>      <ul>        <li data-rpt="">项目理念：Idea + Agent 共同协作</li>        <li data-rpt=""><b>Agent Teams Homer：</b>system prompt 动态写入，Skill 分层约束，Lead Agent 多维调度与自动工具注册</li>        <li data-rpt=""><b>Content Engineering：</b>Write / Select / Compress / Induction 四段式内容工程闭环</li>      </ul>    </li>  </ul>   <p class="ag-p" data-rpt=""><b>自研 AI 基建 / Agent 系统算法 / Infra</b><span class="ag-right">2025.11 – 2026.4</span></p>   <div class="ag-h2" data-rpt="">项目经历</div>   <p class="ag-t" data-rpt="">Example for SFT &amp; RL：Multi-Model Relay · Diverse Trajectory Synthesis Pipeline</p>   <ul class="ag-ls">    <li data-rpt=""><b>技术实现（CLI：relay run · report）：</b>      <ul>        <li data-rpt="">多 config 统一接入，workflow 分发；Checkpoint 压缩，超 50K 触发 LLM 内建摘要，断点恢复</li>      </ul>    </li>  </ul>   <p class="ag-t" data-rpt="">Agent Trainer Evaluation | Rubric-Eval and Wash Pipeline</p>   <ul class="ag-ls">    <li data-rpt=""><b>技术实现（CLI：evaluate run · wash · report）：</b>      <ul>        <li data-rpt="">Rubric 评判打分、Failure-to-Action Gap 审查、Wash Pipeline 错误案例修复与事后可解释性评估</li>      </ul>    </li>  </ul>
+</div><!-- /resume r4 -->
+</div><!-- /page r4 -->
+
+</div><!-- /wrap -->
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  var STORE = 'wb_resume_editor_v1';
+  var editing = false;
+  var hoverEl = null;
+  var bar = document.getElementById('hoverBar');
+  var saveTimer = null;
+
+  // ---------- 恢复已保存内容 ----------
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORE) || 'null');
+    if (saved) {
+      ['r1', 'r2', 'r3', 'r4'].forEach(function (k) {
+        var el = document.querySelector('.resume[data-key="' + k + '"]');
+        if (saved[k] && el) el.innerHTML = saved[k];
+      });
+    }
+  } catch (e) {}
+
+  // 页面始终作为绝对定位板块的定位基准（canvas 类不随内容存盘，每次加载都要补上）
+  document.querySelectorAll('.page').forEach(function (p) { p.classList.add('canvas'); });
+
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.style.display = 'block';
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.style.display = 'none'; }, 1800);
+  }
+
+  function setSaveState(txt) {
+    document.getElementById('saveState').textContent = txt;
+  }
+
+  // ---------- 统一序列化：保存 / 撤销历史共用同一口径（去掉拖拽运行时属性与 ⠿ 手柄） ----------
+  function serializeResume(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('[draggable]').forEach(function (n) { n.removeAttribute('draggable'); });
+    return clone.innerHTML;
+  }
+
+  // ---------- 统一撤销 / 重做（文字编辑 + 自由排版共用一条历史） ----------
+  var hist = [], histIdx = -1, histLock = false, snapTimer = null;
+
+  function captureState() {
+    var s = {};
+    ['r1', 'r2', 'r3', 'r4'].forEach(function (k) {
+      s[k] = serializeResume(document.querySelector('.resume[data-key="' + k + '"]'));
+    });
+    return s;
+  }
+  function pushHistory() {
+    if (histLock) return;
+    var s = captureState();
+    if (histIdx >= 0 && hist[histIdx].r1 === s.r1 && hist[histIdx].r2 === s.r2 && hist[histIdx].r3 === s.r3 && hist[histIdx].r4 === s.r4) return;
+    hist = hist.slice(0, histIdx + 1);
+    hist.push(s);
+    if (hist.length > 120) hist.shift();
+    histIdx = hist.length - 1;
+  }
+  // 打字等连续操作：停顿 400ms 后记一步
+  function scheduleSnap() {
+    clearTimeout(snapTimer);
+    snapTimer = setTimeout(pushHistory, 400);
+  }
+  // 离散操作（拖完 / 克隆删除 / 格式刷）：立即记一步
+  function flushSnap() { clearTimeout(snapTimer); pushHistory(); }
+  function applyState(s) {
+    histLock = true;
+    selectUnit(null);
+    ['r1', 'r2', 'r3', 'r4'].forEach(function (k) {
+      var el = document.querySelector('.resume[data-key="' + k + '"]');
+      if (s[k]) el.innerHTML = s[k];
+    });
+    histLock = false;
+  }
+  function doUndo() {
+    if (!editing) { toast('请先进入编辑模式'); return; }
+    flushSnap();
+    if (histIdx <= 0) { toast('已是最早状态，无法撤销'); return; }
+    histIdx--;
+    applyState(hist[histIdx]);
+    scheduleSave();
+    toast('已撤销');
+  }
+  function doRedo() {
+    if (!editing) { toast('请先进入编辑模式'); return; }
+    if (histIdx >= hist.length - 1) { toast('没有可重做的操作'); return; }
+    histIdx++;
+    applyState(hist[histIdx]);
+    scheduleSave();
+    toast('已重做');
+  }
+
+  // ---------- 保存 ----------
+  function save(silent) {
+    var data = {};
+    ['r1', 'r2', 'r3', 'r4'].forEach(function (k) {
+      data[k] = serializeResume(document.querySelector('.resume[data-key="' + k + '"]'));
+    });
+    try {
+      localStorage.setItem(STORE, JSON.stringify(data));
+      setSaveState('已保存 ' + new Date().toLocaleTimeString());
+      if (!silent) toast('✅ 已保存');
+    } catch (e) { setSaveState('保存失败'); }
+  }
+
+  function scheduleSave() {
+    setSaveState('编辑中…');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () { save(true); }, 700);
+  }
+
+  // ---------- 编辑模式（含自由排版） ----------
+  function setEdit(on) {
+    editing = on;
+    document.body.classList.toggle('editing', on);
+    document.querySelectorAll('.resume').forEach(function (r) {
+      if (on) r.setAttribute('contenteditable', 'true');
+      else r.removeAttribute('contenteditable');
+    });
+    var b = document.getElementById('btnEdit');
+    b.textContent = on ? '✅ 完成编辑' : '✏️ 进入编辑';
+    b.classList.toggle('on', on);
+    if (on) {
+      if (brushActive()) stopBrush();
+      // 页面必须可见才能测量，自动切到"四页"视图
+      var allBtn = document.querySelector('#tabs button[data-tab="all"]');
+      if (allBtn && !allBtn.classList.contains('on')) allBtn.click();
+      // 进入编辑即进入自由排版：一次性把四份简历转为小板块画布
+      document.querySelectorAll('.resume').forEach(function (res) { convertToFree(res); });
+      // 撤销历史以本次进入编辑时的状态为起点
+      clearSel();
+      hist = []; histIdx = -1; pushHistory();
+      toast('点一下板块=选中出边框，拖边框=移动；按住左键拖动（板块上或空白处）=框选批量操作；Ctrl+Z / Ctrl+Y 通用');
+    } else {
+      if (brushActive()) stopBrush();
+      selectUnit(null);
+      bar.style.display = 'none';
+      save(true);
+      toast('已退出编辑并保存');
+    }
+  }
+
+  document.getElementById('btnEdit').onclick = function () { setEdit(!editing); };
+  document.getElementById('btnSave').onclick = function () { save(false); };
+  document.getElementById('btnReset').onclick = function () {
+    if (confirm('确定要丢弃全部修改、恢复到原版内容吗？此操作不可撤销。')) {
+      localStorage.removeItem(STORE);
+      location.reload();
+    }
+  };
+  document.getElementById('btnPrint').onclick = function () {
+    if (editing) setEdit(false);
+    window.print();
+  };
+  document.getElementById('btnDownload').onclick = function () {
+    if (editing) setEdit(false);
+    var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '我的简历（可编辑）.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('已下载，双击即可离线打开继续编辑');
+  };
+
+  // ---------- 标签页 ----------
+  document.querySelectorAll('#tabs button').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('#tabs button').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      document.body.classList.remove('show-r1', 'show-r2', 'show-r3', 'show-r4', 'show-all');
+      document.body.classList.add('show-' + b.dataset.tab);
+    };
+  });
+
+  // ---------- 自动保存 + 撤销历史记录 ----------
+  document.addEventListener('input', function (e) {
+    if (editing && e.target.closest('.resume')) { scheduleSave(); scheduleSnap(); }
+  });
+
+  // ---------- 富文本格式（WPS 风格工具栏） ----------
+  var savedRange = null;
+  var fmt = document.getElementById('fmtbar');
+
+  // 编辑状态下随时记住简历内的选区（工具栏点击不丢选区）
+  document.addEventListener('selectionchange', function () {
+    var sel = window.getSelection();
+    if (editing && sel.rangeCount > 0 && sel.anchorNode) {
+      var el = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
+      if (el && el.closest && el.closest('.resume')) savedRange = sel.getRangeAt(0).cloneRange();
+    }
+  });
+  function restoreSel() {
+    if (!savedRange) return false;
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+    return true;
+  }
+  // 按下工具栏按钮时不让选区失焦
+  fmt.addEventListener('mousedown', function (e) {
+    if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'OPTION') e.preventDefault();
+  });
+
+  function exec(cmd, val) {
+    if (!editing) { toast('请先点击「进入编辑」'); return; }
+    // 撤销/重做已改为自定义历史，不再走 execCommand
+    if (cmd === 'undo') { doUndo(); return; }
+    if (cmd === 'redo') { doRedo(); return; }
+    restoreSel();
+    try { document.execCommand(cmd, false, val || null); } catch (e) {}
+    scheduleSnap();
+    scheduleSave();
+  }
+
+  // 精确像素字号：借道 fontSize=7 再替换成 span
+  function setFontSizePx(px) {
+    if (!editing) { toast('请先点击「进入编辑」'); return; }
+    restoreSel();
+    var sel = window.getSelection();
+    if (!sel.rangeCount || sel.isCollapsed) { toast('请先选中要改的文字'); return; }
+    document.execCommand('fontSize', false, '7');
+    document.querySelectorAll('.resume font[size="7"]').forEach(function (f) {
+      var s = document.createElement('span');
+      s.style.fontSize = px + 'px';
+      s.innerHTML = f.innerHTML;
+      f.replaceWith(s);
+    });
+    scheduleSnap();
+    scheduleSave();
+  }
+  function getSelFontSize() {
+    var sel = window.getSelection();
+    if (!sel.rangeCount) return 13.2;
+    var n = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
+    while (n && !n.classList.contains('resume')) {
+      var fs = window.getComputedStyle(n).fontSize;
+      if (fs && fs !== 'inherit' && !/^(13\.2|13px)$/i.test(fs)) return parseFloat(fs) || 13.2;
+      n = n.parentElement;
+    }
+    return 13.2;
+  }
+  // 所在块级元素（li/p/div）的行距调整
+  function adjLineHeight(delta) {
+    if (!editing) { toast('请先点击「进入编辑」'); return; }
+    var sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    var n = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
+    var blk = n && n.closest && (n.closest('li') || n.closest('p') || n.closest('div'));
+    if (!blk || !blk.closest('.resume')) { toast('请把光标放在要调行距的段落里'); return; }
+    var cur = blk.style.lineHeight ? parseFloat(blk.style.lineHeight) : 1.62;
+    blk.style.lineHeight = Math.max(1.1, Math.round((cur + delta) * 100) / 100);
+    scheduleSnap();
+    scheduleSave();
+  }
+
+  // 命令按钮
+  fmt.querySelectorAll('button[data-cmd]').forEach(function (b) {
+    b.addEventListener('click', function () { exec(b.dataset.cmd); });
+  });
+  // 字号增减
+  fmt.querySelectorAll('button[data-act]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (b.dataset.act === 'sizeUp') setFontSizePx(getSelFontSize() + 1);
+      if (b.dataset.act === 'sizeDown') setFontSizePx(Math.max(9, getSelFontSize() - 1));
+      if (b.dataset.act === 'lhUp') adjLineHeight(0.15);
+      if (b.dataset.act === 'lhDown') adjLineHeight(-0.15);
+    });
+  });
+  // 字体下拉
+  document.getElementById('fontSel').addEventListener('change', function () {
+    if (this.value) exec('fontName', this.value);
+    this.selectedIndex = 0;
+  });
+  // 字号下拉
+  document.getElementById('sizeSel').addEventListener('change', function () {
+    if (this.value) setFontSizePx(parseFloat(this.value));
+    this.selectedIndex = 0;
+  });
+  // 字迹颜色
+  var foreCur = document.getElementById('foreCur');
+  var cnColor = { '#000000': '黑', '#c0392b': '红', '#1a4f9c': '蓝', '#6b7280': '灰', '#b3541e': '棕', '#16a34a': '绿' };
+  function applyFore(c) {
+    exec('foreColor', c);
+    foreCur.textContent = cnColor[c] || c;
+  }
+  document.getElementById('foreColor').addEventListener('input', function () { applyFore(this.value); });
+  fmt.querySelectorAll('[data-fore]').forEach(function (s) {
+    s.addEventListener('click', function () { applyFore(s.dataset.fore); });
+  });
+  // 底纹高亮
+  function applyHilite(c) { exec('hiliteColor', c); }
+  document.getElementById('hiliteColor').addEventListener('input', function () { applyHilite(this.value); });
+  fmt.querySelectorAll('[data-hilite]').forEach(function (s) {
+    s.addEventListener('click', function () { applyHilite(s.dataset.hilite); });
+  });
+
+  // ---------- 自由排版（已并入编辑模式）：小字段独立成单位，支持单选 / 框选 / 批量操作 ----------
+  var dragEls = null;
+  var dragMoved = false;
+  var dragStartX = 0, dragStartY = 0;
+  var selUnits = new Set();
+  var selbar = document.getElementById('selbar');
+  var selcount = document.getElementById('selcount');
+  var textFocusUnit = null; // 正在编辑文字的板块：再次按下保持文字操作，不进入框选
+
+  function refreshSelBar() {
+    if (!selbar) return;
+    if (editing && selUnits.size) {
+      selcount.textContent = '已选 ' + selUnits.size + ' 个板块';
+      selbar.style.display = 'flex';
+    } else {
+      selbar.style.display = 'none';
+    }
+  }
+  function clearSel() {
+    textFocusUnit = null;
+    selUnits.forEach(function (u) { u.classList.remove('sel'); });
+    selUnits.clear();
+    refreshSelBar();
+  }
+  // 单选（兼容旧调用：selectUnit(null) = 清空选择）
+  function selectUnit(u) {
+    clearSel();
+    if (u && u.classList.contains('unit')) {
+      selUnits.add(u);
+      u.classList.add('sel');
+    }
+    refreshSelBar();
+  }
+  // 多选（框选结果）
+  function selectUnits(list) {
+    clearSel();
+    list.forEach(function (u) {
+      selUnits.add(u);
+      u.classList.add('sel');
+    });
+    refreshSelBar();
+  }
+  // 批量复制：每个选中板块克隆一份并偏移 14px，新副本成为新的选择
+  function duplicateSelUnits() {
+    if (!selUnits.size) { toast('先选中要复制的板块'); return; }
+    var clones = [];
+    selUnits.forEach(function (u) {
+      var c = u.cloneNode(true);
+      c.classList.remove('sel', 'dragging-el');
+      c.style.left = ((parseFloat(u.style.left) || 0) + 14) + 'px';
+      c.style.top = ((parseFloat(u.style.top) || 0) + 14) + 'px';
+      u.after(c);
+      clones.push(c);
+    });
+    selectUnits(clones);
+    flushSnap();
+    scheduleSave();
+    toast('已复制 ' + clones.length + ' 个板块（偏移 14px，可拖到目标位置）');
+  }
+  // 批量删除
+  function deleteSelUnits() {
+    if (!selUnits.size) { toast('先选中要删除的板块'); return; }
+    var n = selUnits.size;
+    selUnits.forEach(function (u) { u.remove(); });
+    clearSel();
+    flushSnap();
+    scheduleSave();
+    toast('已删除 ' + n + ' 个板块（Ctrl+Z 可撤销）');
+  }
+  if (selbar) {
+    selbar.addEventListener('click', function (e) {
+      var act = e.target.dataset.act;
+      if (!act) return;
+      if (act === 'dup') duplicateSelUnits();
+      else if (act === 'del') deleteSelUnits();
+    });
+  }
+
+  // 把流式布局转换为画布式绝对定位（一次性，位置之后随保存持久化）
+  function convertToFree(res) {
+    // canvas 类（position:relative）必须无条件补上：它加在 .page 上、不随内容存盘，
+    // 刷新后若缺失，绝对定位板块会以整个文档为基准，导致全部内容重叠
+    var page = res.closest('.page');
+    page.classList.add('canvas');
+    if (res.dataset.free === '1' || res.querySelector('.unit')) return;
+    var pageRect = page.getBoundingClientRect();
+
+    // 先给 .sec 生成独立线条单位（在测量前插入，保持测量一致）
+    Array.prototype.slice.call(res.children).forEach(function (block) {
+      if (block.matches('.sec')) {
+        var line = document.createElement('div');
+        line.className = 'hline unit';
+        var cs = getComputedStyle(block);
+        line.style.background = cs.borderBottomColor || '#000';
+        line.style.height = (parseFloat(cs.borderBottomWidth) || 2) + 'px';
+        block.parentNode.insertBefore(line, block.nextSibling);
+      }
+    });
+
+    var units = [];
+    Array.prototype.forEach.call(res.children, function (block) {
+      if (block.matches('.head')) {
+        Array.prototype.push.apply(units, block.querySelectorAll('.badge, .name, .contact, .photo'));
+      } else if (block.matches('.edu')) {
+        Array.prototype.push.apply(units, block.querySelectorAll('.right, .en, .cn, .major-en, .major-cn'));
+      } else if (block.matches('.job-head')) {
+        Array.prototype.push.apply(units, block.querySelectorAll('.right, .co-en, .co-cn, .role'));
+      } else if (block.matches('ul')) {
+        Array.prototype.push.apply(units, block.children);
+      } else {
+        units.push(block);
+      }
+    });
+
+    // 先统一测量（避免逐个改样式导致后续测量偏移）
+    var rects = units.map(function (el) { return el.getBoundingClientRect(); });
+    units.forEach(function (el, i) {
+      var r = rects[i];
+      el.classList.add('unit');
+      el.style.position = 'absolute';
+      el.style.left = (r.left - pageRect.left) + 'px';
+      el.style.top = (r.top - pageRect.top) + 'px';
+      el.style.width = r.width + 'px';
+      if (el.classList.contains('right') || el.classList.contains('lv')) el.style.float = 'none';
+      if (el.matches('.sec')) {
+        // 线条已拆出去，标题本体去掉边框
+        el.style.borderBottom = 'none';
+        el.style.paddingBottom = '0';
+      }
+    });
+    // 清空壳容器的克隆/删除控制点，避免误操作空块
+    res.querySelectorAll('.head, .edu, .job-head').forEach(function (shell) {
+      shell.removeAttribute('data-rpt');
+    });
+    res.dataset.free = '1';
+  }
+
+  // 指针交互：单击板块 → 选中出绿框，按住即可拖动（多选时整组一起拖）；
+  // 再点已选中板块内部 → 取消选中并放置光标编辑文字；空白处按住拖动 → 框选多个板块
+  function nearEdge(u, x, y) {
+    var r = u.getBoundingClientRect();
+    var m = 6;
+    return x <= r.left + m || x >= r.right - m || y <= r.top + m || y >= r.bottom - m;
+  }
+  function beginDrag(u, e) {
+    var list = selUnits.has(u) ? Array.from(selUnits) : [u];
+    dragEls = list.map(function (el) {
+      return { el: el, left: parseFloat(el.style.left) || 0, top: parseFloat(el.style.top) || 0 };
+    });
+    dragMoved = false;
+    dragStartX = e.clientX; dragStartY = e.clientY;
+    list.forEach(function (el) { el.classList.add('dragging-el'); });
+    try { u.setPointerCapture(e.pointerId); } catch (err) {}
+  }
+
+  var marquee = null, marqueePage = null, marqueeX0 = 0, marqueeY0 = 0, marqueeMoved = false;
+  var pend = null; // 按下待定状态：松手 = 单击选择；按住拖动超过阈值 = 框选
+
+  function startMarquee(x, y, page) {
+    marqueePage = page;
+    marqueeX0 = x; marqueeY0 = y;
+    marqueeMoved = false;
+    marquee = document.createElement('div');
+    marquee.id = 'marquee';
+    page.appendChild(marquee);
+    document.body.classList.add('marqueeing');
+  }
+
+  document.addEventListener('pointerdown', function (e) {
+    if (!editing || e.button !== 0) return;
+    var u = e.target.closest && e.target.closest('.unit');
+    if (u && u.closest('.resume')) {
+      if (u.classList.contains('sel')) {
+        if (nearEdge(u, e.clientX, e.clientY)) {
+          // 已选中：按住边框拖动，整组一起移动
+          e.preventDefault();
+          beginDrag(u, e);
+        } else {
+          // 已选中板块的内部：取消选中并放置光标，进入该板块的文字编辑
+          selectUnit(null);
+          textFocusUnit = u;
+        }
+      } else if (u === textFocusUnit) {
+        // 正在编辑这个板块的文字：保持原生划选 / 光标操作，不进入框选
+        return;
+      } else {
+        // 未选中板块按下：待定——松手 = 选中出边框；按住拖动 = 从这里开始框选
+        e.preventDefault();
+        pend = { x: e.clientX, y: e.clientY, unit: u, page: u.closest('.page') };
+        try { u.setPointerCapture(e.pointerId); } catch (err) {}
+      }
+    } else if (e.target.closest && e.target.closest('.page')) {
+      // 空白处按下：待定——松手 = 清空选择；按住拖动 = 框选
+      e.preventDefault();
+      clearSel();
+      pend = { x: e.clientX, y: e.clientY, unit: null, page: e.target.closest('.page') };
+      try { e.target.setPointerCapture(e.pointerId); } catch (err) {}
+    }
+  });
+
+  document.addEventListener('pointermove', function (e) {
+    if (pend && !marquee) {
+      if (Math.abs(e.clientX - pend.x) > 3 || Math.abs(e.clientY - pend.y) > 3) {
+        var p = pend; pend = null;
+        startMarquee(p.x, p.y, p.page);
+      } else {
+        return;
+      }
+    }
+    if (marquee) {
+      var pr = marqueePage.getBoundingClientRect();
+      var x1 = Math.min(marqueeX0, e.clientX) - pr.left;
+      var y1 = Math.min(marqueeY0, e.clientY) - pr.top;
+      var x2 = Math.max(marqueeX0, e.clientX) - pr.left;
+      var y2 = Math.max(marqueeY0, e.clientY) - pr.top;
+      marquee.style.left = x1 + 'px'; marquee.style.top = y1 + 'px';
+      marquee.style.width = (x2 - x1) + 'px'; marquee.style.height = (y2 - y1) + 'px';
+      if (x2 - x1 > 3 || y2 - y1 > 3) marqueeMoved = true;
+      return;
+    }
+    if (!dragEls) return;
+    var dx = e.clientX - dragStartX;
+    var dy = e.clientY - dragStartY;
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragMoved = true;
+    if (dragMoved) {
+      dragEls.forEach(function (d) {
+        d.el.style.left = (d.left + dx) + 'px';
+        d.el.style.top = (d.top + dy) + 'px';
+      });
+    }
+  });
+
+  document.addEventListener('pointerup', function () {
+    if (pend) {
+      // 松手且没拖动：单击 —— 选中该板块（出现边框）
+      if (pend.unit) selectUnit(pend.unit);
+      pend = null;
+    }
+    if (marquee) {
+      var mq = marquee, mp = marqueePage, moved = marqueeMoved;
+      marquee = null; marqueePage = null;
+      document.body.classList.remove('marqueeing');
+      if (moved) {
+        var r = mq.getBoundingClientRect();
+        var picked = [];
+        mp.querySelectorAll('.unit').forEach(function (u) {
+          var ur = u.getBoundingClientRect();
+          if (ur.left < r.right && ur.right > r.left && ur.top < r.bottom && ur.bottom > r.top) picked.push(u);
+        });
+        if (picked.length) {
+          selectUnits(picked);
+          toast('已选中 ' + picked.length + ' 个板块：可整组拖动，⧉ 复制 / ✕ 删除 / Delete 键');
+        }
+      }
+      mq.remove();
+    }
+    if (dragEls) {
+      dragEls.forEach(function (d) { d.el.classList.remove('dragging-el'); });
+      if (dragMoved) { flushSnap(); scheduleSave(); }
+      dragEls = null;
+    }
+  });
+
+  // 键盘：Ctrl+Z / Ctrl+Y 统一撤销重做；Ctrl+D 复制选中板块；Delete / Backspace 删除选中板块；
+  // 选中板块时方向键批量微调（Shift+方向键 10px）；Esc 取消选中
+  document.addEventListener('keydown', function (e) {
+    if (!editing) return;
+    var k = e.key.toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && k === 'z') {
+      e.preventDefault();
+      if (e.shiftKey) doRedo(); else doUndo();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); doRedo(); return; }
+    if (e.key === 'Escape') { clearSel(); return; }
+    if (selUnits.size) {
+      if ((e.ctrlKey || e.metaKey) && k === 'd') { e.preventDefault(); duplicateSelUnits(); return; }
+      if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deleteSelUnits(); return; }
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].indexOf(e.key) > -1) {
+        var step = e.shiftKey ? 10 : 1;
+        selUnits.forEach(function (u) {
+          var L = parseFloat(u.style.left) || 0, T = parseFloat(u.style.top) || 0;
+          if (e.key === 'ArrowLeft') u.style.left = (L - step) + 'px';
+          if (e.key === 'ArrowRight') u.style.left = (L + step) + 'px';
+          if (e.key === 'ArrowUp') u.style.top = (T - step) + 'px';
+          if (e.key === 'ArrowDown') u.style.top = (T + step) + 'px';
+        });
+        e.preventDefault();
+        scheduleSave();
+        scheduleSnap();
+      }
+    }
+  });
+
+
+  // ---------- 格式刷 ----------
+  var brushing = false;
+  var brushSpec = null;
+  var brushBtn = fmt.querySelector('[data-act="brush"]');
+  function brushActive() { return brushing; }
+  function stopBrush() {
+    brushing = false;
+    document.body.classList.remove('brushing');
+    brushBtn.classList.remove('on');
+  }
+  function rgb2hex(rgb) {
+    var m = rgb.match(/\d+/g);
+    if (!m) return '#000000';
+    return '#' + m.slice(0, 3).map(function (x) {
+      return ('0' + (+x).toString(16)).slice(-2);
+    }).join('');
+  }
+  brushBtn.addEventListener('click', function () {
+    if (!editing) { toast('请先进入编辑模式'); return; }
+    if (brushing) { stopBrush(); toast('已取消格式刷'); return; }
+    if (!savedRange) { toast('先把光标点在要复制格式的文字上，再点格式刷'); return; }
+    var n = savedRange.startContainer;
+    if (n.nodeType === 3) n = n.parentElement;
+    if (!n || !n.closest('.resume')) { toast('先把光标点在要复制格式的文字上，再点格式刷'); return; }
+    var cs = window.getComputedStyle(n);
+    var deco = cs.textDecorationLine || cs.textDecoration || '';
+    var bg = cs.backgroundColor;
+    brushSpec = {
+      color: rgb2hex(cs.color),
+      bg: (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') ? rgb2hex(bg) : null,
+      bold: parseInt(cs.fontWeight, 10) >= 600,
+      italic: cs.fontStyle === 'italic',
+      underline: deco.indexOf('underline') > -1,
+      strike: deco.indexOf('line-through') > -1,
+      fontFamily: cs.fontFamily.split(',')[0].replace(/["']/g, '').trim(),
+      fontSize: parseFloat(cs.fontSize)
+    };
+    brushing = true;
+    document.body.classList.add('brushing');
+    brushBtn.classList.add('on');
+    toast('格式刷已就绪：选中要应用格式的文字');
+  });
+  document.addEventListener('mouseup', function () {
+    if (!brushing || !editing) return;
+    setTimeout(function () {
+      var sel = window.getSelection();
+      if (!sel.rangeCount || sel.isCollapsed || !sel.toString().length) return;
+      var el = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
+      if (!el || !el.closest || !el.closest('.resume')) return;
+      var s = brushSpec;
+      document.execCommand('foreColor', false, s.color);
+      if (s.bg) document.execCommand('hiliteColor', false, s.bg);
+      if (s.bold) document.execCommand('bold');
+      if (s.italic) document.execCommand('italic');
+      if (s.underline) document.execCommand('underline');
+      if (s.strike) document.execCommand('strikeThrough');
+      if (s.fontFamily) document.execCommand('fontName', false, s.fontFamily);
+      if (s.fontSize) {
+        document.execCommand('fontSize', false, '7');
+        document.querySelectorAll('.resume font[size="7"]').forEach(function (f) {
+          var sp = document.createElement('span');
+          sp.style.fontSize = s.fontSize + 'px';
+          sp.innerHTML = f.innerHTML;
+          f.replaceWith(sp);
+        });
+      }
+      stopBrush();
+      flushSnap();
+      scheduleSave();
+      toast('🖌️ 格式已应用');
+    }, 0);
+  });
+
+  // ---------- 条目悬停控制（克隆 / 删除） ----------
+  function showBar(el) {
+    hoverEl = el;
+    var r = el.getBoundingClientRect();
+    bar.style.display = 'flex';
+    bar.style.top = (window.scrollY + r.top - 26) + 'px';
+    bar.style.left = (window.scrollX + r.right - 118) + 'px';
+  }
+  document.addEventListener('mouseover', function (e) {
+    if (!editing) return;
+    var t = e.target.closest && e.target.closest('[data-rpt]');
+    if (t && t !== hoverEl) showBar(t);
+  });
+  bar.addEventListener('mouseleave', function () {
+    bar.style.display = 'none'; hoverEl = null;
+  });
+  document.addEventListener('scroll', function () {
+    if (hoverEl) showBar(hoverEl);
+  }, true);
+  bar.addEventListener('click', function (e) {
+    var act = e.target.dataset.act;
+    if (!act || !hoverEl) return;
+    if (act === 'add') {
+      var clone = hoverEl.cloneNode(true);
+      hoverEl.after(clone);
+    } else if (act === 'del') {
+      var siblings = 0, n = hoverEl.parentNode.firstElementChild;
+      while (n) { if (n.matches('[data-rpt]')) siblings++; n = n.nextElementSibling; }
+      if (siblings <= 1) { toast('至少保留一条，不能全部删除'); return; }
+      hoverEl.remove();
+    }
+    bar.style.display = 'none'; hoverEl = null;
+    flushSnap();
+    scheduleSave();
+  });
+})();
+</script>
+</body>
+</html>

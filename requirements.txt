@@ -1,0 +1,7 @@
+# 龙氏秋招简历编写布局工具 · Python 工具依赖
+# 核心应用（index.html）零依赖，双击即可运行；
+# 本文件仅服务于 tools/ 下的开发辅助脚本。
+#
+#   pip install -r requirements.txt
+
+python-dotenv>=1.0.0
